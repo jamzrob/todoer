@@ -37,7 +37,7 @@ impl<'a> TryFrom<Lines<'a>> for Todos {
             data.insert(index, todo);
             index += 1;
         }
-        return Ok(default_data());
+        return Ok(Todos(data));
 
     }
 }
@@ -86,8 +86,9 @@ impl TryFrom<&Todoer> for String {
         let mut formatted_data = String::from(filename.to_owned() + "\n");
         formatted_data +=  &String::from(done_count + "/" + &size  + "\n");
 
-        for index in 0..todoer.data.0.keys().len().try_into().unwrap() {
-            let todo = todoer.data.0.get(&index).unwrap();
+        let Todos(todos) = &todoer.data;
+        for index in 0..todos.keys().len().try_into().unwrap() {
+            let todo = todos.get(&index).unwrap();
             if todo.done {
                 formatted_data += "- [x] ";
             } else {
