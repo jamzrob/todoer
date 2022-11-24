@@ -2,7 +2,7 @@ use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
 use rust::{config::Config, opts::Opts, todoer::Todoer};
 
-#[get("/print")]
+#[get("/")]
 async fn print() -> impl Responder {
     let config: Config = Opts::parse().try_into().expect("Error parsing data");
     let proj = Todoer::from_config(config.config);

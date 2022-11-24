@@ -12,6 +12,7 @@ pub struct Todo {
 #[derive(Debug)]
 pub struct Todos(pub HashMap<u32, Todo>);
 
+#[derive(Debug)]
 pub struct Todoer {
     config: PathBuf,
     data: Todos,
