@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 use crate::opts::Opts;
 
@@ -9,7 +9,7 @@ use chrono::{Datelike, Local};
 #[derive(Debug)]
 pub struct Config {
     pub operation: Operation,
-    pub config: PathBuf
+    pub config: PathBuf,
 }
 
 impl TryFrom<Opts> for Config {
@@ -19,11 +19,11 @@ impl TryFrom<Opts> for Config {
         let operation = value.args.try_into()?;
         let config = get_config(value.config)?;
 
-        return Ok(Config{ operation, config });
+        Ok(Config { operation, config })
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Operation {
     Print(),
     Add(String),
@@ -36,7 +36,7 @@ impl TryFrom<Vec<String>> for Operation {
 
     fn try_from(value: Vec<String>) -> Result<Self> {
         let mut value = value;
-        if value.len() == 0 {
+        if value.is_empty() {
             return Ok(Operation::Print());
         }
 
@@ -44,8 +44,11 @@ impl TryFrom<Vec<String>> for Operation {
 
         if term == "add" {
             if value.len() != 2 {
-                let err = anyhow!("operation add expects 1 arguments but got {}", value.len() - 1);
-                return Err(err)
+                let err = anyhow!(
+                    "operation add expects 1 arguments but got {}",
+                    value.len() - 1
+                );
+                return Err(err);
             }
 
             let arg = value.pop().expect("to exist");
@@ -54,35 +57,45 @@ impl TryFrom<Vec<String>> for Operation {
 
         if term == "done" {
             if value.len() != 2 {
-                let err = anyhow!("operation done expects 1 arguments but got {}", value.len() - 1);
-                return Err(err)
+                let err = anyhow!(
+                    "operation done expects 1 arguments but got {}",
+                    value.len() - 1
+                );
+                return Err(err);
             }
 
             let arg = value.pop().expect("to exist");
-            return Ok(Operation::Complete(arg.parse().expect("Please type a valid number")));
-
+            return Ok(Operation::Complete(
+                arg.parse().expect("Please type a valid number"),
+            ));
         }
 
         if term == "remove" {
             if value.len() != 2 {
-                let err = anyhow!("operation remove expects 1 arguments but got {}", value.len() - 1);
-                return Err(err)
+                let err = anyhow!(
+                    "operation remove expects 1 arguments but got {}",
+                    value.len() - 1
+                );
+                return Err(err);
             }
 
             let arg = value.pop().expect("to exist");
-            return Ok(Operation::Remove(arg.parse().expect("Please type a valid number")));
-
+            return Ok(Operation::Remove(
+                arg.parse().expect("Please type a valid number"),
+            ));
         }
 
         if value.len() > 1 {
-                let err = anyhow!("operation print expects 0 or 1 arguments but got {}", value.len());
-                return Err(err)
+            let err = anyhow!(
+                "operation print expects 0 or 1 arguments but got {}",
+                value.len()
+            );
+            return Err(err);
         }
 
-        return Ok(Operation::Print());
+        Ok(Operation::Print())
     }
 }
-
 
 fn get_config(config: Option<PathBuf>) -> Result<PathBuf> {
     if let Some(c) = config {
@@ -106,17 +119,15 @@ fn get_config(config: Option<PathBuf>) -> Result<PathBuf> {
         return Ok(home);
     }
 
-    return Err(anyhow!("unable to find config location"));
-
+    Err(anyhow!("unable to find config location"))
 }
-
 
 #[cfg(test)]
 mod test {
 
     use anyhow::Result;
 
-    use crate::{opts::Opts, config::Operation};
+    use crate::{config::Operation, opts::Opts};
 
     use super::Config;
 
@@ -127,49 +138,47 @@ mod test {
         let opts: Config = Opts {
             args: vec![],
             config: Some(PathBuf::from("")),
-        }.try_into()?;
+        }
+        .try_into()?;
 
         assert_eq!(opts.config, PathBuf::from(""));
         assert_eq!(opts.operation, Operation::Print());
-        return Ok(());
+        Ok(())
     }
 
     #[test]
     fn test_add_todo() -> Result<()> {
         let opts: Config = Opts {
-            args: vec![String::from("add"),
-                       String::from("foo")],
+            args: vec![String::from("add"), String::from("foo")],
             config: None,
-        }.try_into()?;
+        }
+        .try_into()?;
 
         assert_eq!(opts.operation, Operation::Add(String::from("foo")));
-        return Ok(());
+        Ok(())
     }
 
     #[test]
     fn test_complete_todo() -> Result<()> {
         let opts: Config = Opts {
-            args: vec![String::from("done"),
-                       String::from("1")],
+            args: vec![String::from("done"), String::from("1")],
             config: None,
-        }.try_into()?;
+        }
+        .try_into()?;
 
         assert_eq!(opts.operation, Operation::Complete(1));
-        return Ok(());
+        Ok(())
     }
 
     #[test]
     fn test_remove_todo() -> Result<()> {
         let opts: Config = Opts {
-            args: vec![String::from("remove"),
-                       String::from("1")],
+            args: vec![String::from("remove"), String::from("1")],
             config: None,
-        }.try_into()?;
+        }
+        .try_into()?;
 
         assert_eq!(opts.operation, Operation::Remove(1));
-        return Ok(());
+        Ok(())
     }
-
 }
-
-
