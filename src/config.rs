@@ -26,6 +26,7 @@ impl TryFrom<Opts> for Config {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Operation {
     Print(),
+    PrintAll(),
     Add(String),
     Complete(u32),
     Remove(u32),
@@ -93,7 +94,7 @@ impl TryFrom<Vec<String>> for Operation {
             return Err(err);
         }
 
-        Ok(Operation::Print())
+        Ok(Operation::PrintAll())
     }
 }
 

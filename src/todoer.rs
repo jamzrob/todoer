@@ -14,13 +14,13 @@ pub struct Todos(pub HashMap<u32, Todo>);
 
 #[derive(Debug)]
 pub struct Todoer {
-    config: PathBuf,
-    data: Todos,
+    pub config: PathBuf,
+    pub data: Todos,
     size: u32,
     done_count: u32,
 }
 
-fn default_data() -> Todos {
+pub fn default_data() -> Todos {
     Todos(HashMap::new())
 }
 
@@ -103,6 +103,14 @@ impl TryFrom<&Todoer> for String {
 }
 
 impl Todoer {
+    pub fn default_todoer(config: PathBuf) -> Self {
+        Todoer {
+            config,
+            data: default_data(),
+            size: 0,
+            done_count: 0,
+        }
+    }
     pub fn get_value_names(&self) -> Vec<&String> {
         let mut ret = Vec::new();
         let mut index: u32 = 0;
