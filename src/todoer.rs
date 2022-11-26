@@ -192,6 +192,11 @@ impl Todoer {
     }
 
     pub fn save(&self) -> Result<()> {
+        if let Some(p) = self.config.parent() {
+            if std::fs::metadata(&p).is_err() {
+                std::fs::create_dir_all(p)?;
+            }
+        }
         let contents: String = self.try_into()?;
         std::fs::write(&self.config, contents)?;
 
