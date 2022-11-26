@@ -44,6 +44,11 @@ async fn remove(data: web::Data<Mutex<Todoer>>, body: String) -> impl Responder 
 async fn main() -> std::io::Result<()> {
     let config = get_config(Some(std::env::current_dir().unwrap())).unwrap();
 
+    let port = std::env::var("PORT")
+        .unwrap_or_else(|_| "3000".to_string())
+        .parse()
+        .unwrap();
+
     let data = web::Data::new(Mutex::new(Todoer::from_config(config)));
     HttpServer::new(move || {
         App::new()
@@ -53,7 +58,7 @@ async fn main() -> std::io::Result<()> {
             .service(complete)
             .service(remove)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }
