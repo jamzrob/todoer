@@ -1,0 +1,2 @@
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/jamesraubenheimer/Code/rust/todoer/target/release/build/typenum-f09cd3d8530b7d10/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/jamesraubenheimer/Code/rust/todoer/target/release/build/typenum-f09cd3d8530b7d10/out/op.rs
