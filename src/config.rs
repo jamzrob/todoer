@@ -98,13 +98,15 @@ impl TryFrom<Vec<String>> for Operation {
     }
 }
 
-fn get_config(config: Option<PathBuf>) -> Result<PathBuf> {
-    if let Some(c) = config {
-        return Ok(c);
-    }
-
+pub fn get_config(config: Option<PathBuf>) -> Result<PathBuf> {
     let now = Local::now();
     let filename = format!("{}-{:02}-{:02}", now.year() % 100, now.month(), now.day());
+
+    if let Some(mut c) = config {
+        c.push("todo");
+        c.push(format!("{}.md", filename));
+        return Ok(c);
+    }
 
     if let Ok(home) = std::env::var("XDG_CONFIG_HOME") {
         let mut home = PathBuf::from(home);

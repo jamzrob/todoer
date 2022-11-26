@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use clap::Parser;
-use rust::{config::Config, opts::Opts, todoer::Todoer};
+use rust::config::get_config;
+use rust::todoer::Todoer;
 
 #[get("/")]
 async fn print(data: web::Data<Mutex<Todoer>>) -> impl Responder {
@@ -42,9 +42,9 @@ async fn remove(data: web::Data<Mutex<Todoer>>, body: String) -> impl Responder 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let config: Config = Opts::parse().try_into().expect("Error parsing data");
+    let config = get_config(Some(std::env::current_dir().unwrap())).unwrap();
 
-    let data = web::Data::new(Mutex::new(Todoer::from_config(config.config)));
+    let data = web::Data::new(Mutex::new(Todoer::from_config(config)));
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())

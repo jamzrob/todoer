@@ -1,19 +1,19 @@
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
-use clap::Parser;
-use rust::{config::Config, opts::Opts, todoer::Todoer};
+use rust::config::get_config;
+use rust::todoer::Todoer;
 
 #[get("/")]
 async fn print() -> impl Responder {
-    let config: Config = Opts::parse().try_into().expect("Error parsing data");
-    let proj = Todoer::from_config(config.config);
+    let config = get_config(Some(std::env::current_dir().unwrap())).unwrap();
+    let proj = Todoer::from_config(config);
     let value = proj.print_values();
     HttpResponse::Ok().body(value)
 }
 
 #[post("/add")]
 async fn add(body: String) -> impl Responder {
-    let config: Config = Opts::parse().try_into().expect("Error parsing data");
-    let mut proj = Todoer::from_config(config.config);
+    let config = get_config(Some(std::env::current_dir().unwrap())).unwrap();
+    let mut proj = Todoer::from_config(config);
     proj.set_value(body);
     match proj.save() {
         Ok(()) => HttpResponse::Ok(),
@@ -23,8 +23,8 @@ async fn add(body: String) -> impl Responder {
 
 #[post("/done")]
 async fn complete(body: String) -> impl Responder {
-    let config: Config = Opts::parse().try_into().expect("Error parsing data");
-    let mut proj = Todoer::from_config(config.config);
+    let config = get_config(Some(std::env::current_dir().unwrap())).unwrap();
+    let mut proj = Todoer::from_config(config);
     proj.mark_done(body.parse().unwrap());
     match proj.save() {
         Ok(()) => HttpResponse::Ok(),
@@ -34,8 +34,8 @@ async fn complete(body: String) -> impl Responder {
 
 #[post("/remove")]
 async fn remove(body: String) -> impl Responder {
-    let config: Config = Opts::parse().try_into().expect("Error parsing data");
-    let mut proj = Todoer::from_config(config.config);
+    let config = get_config(Some(std::env::current_dir().unwrap())).unwrap();
+    let mut proj = Todoer::from_config(config);
     proj.remove_value(body.parse().unwrap());
     match proj.save() {
         Ok(()) => HttpResponse::Ok(),
