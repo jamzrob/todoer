@@ -10,7 +10,7 @@ use anyhow::Result;
 
 fn main() -> Result<()> {
     let config: Config = Opts::parse().try_into()?;
-    let mut proj = Todoer::from_config(config.config);
+    let mut proj = Todoer::from_config(config.config.clone());
 
     match config.operation {
         Operation::Print() => {
@@ -19,9 +19,8 @@ fn main() -> Result<()> {
             println!("{}", value);
         }
         Operation::PrintAll() => {
-            let config: Config = Opts::parse().try_into()?;
             let projs =
-                Todoers::from_todos_dir(config.config.parent().unwrap().to_path_buf()).unwrap();
+                Todoers::from_todos_dir(config.config.clone().parent().unwrap().to_path_buf()).unwrap();
 
             println!("{}", projs.print_all_todos_together());
         }

@@ -9,7 +9,7 @@ Todos are defaulted to save under one's home directory under todos/ named via th
 
 Specify where the todo file will be created
 ```
-   cargo run --bin todoer -- --config "~(PATH)/<filename>.md"
+   cargo run --bin todoer -- --config "~(PATH)"
 ```
 1. Print current todos
 ```
