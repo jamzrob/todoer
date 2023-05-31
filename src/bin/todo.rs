@@ -85,51 +85,55 @@ pub fn get_done_index() -> Result<String> {
 }
 
 fn main() -> Result<()> {
-    print!("{esc}c", esc = 27 as char);
-    get_initial_todos().unwrap();
-    let mut args = vec![];
-    let items = vec!["add", "done", "remove"];
-    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
-        .items(&items)
-        .default(0)
-        .interact_on_opt(&Term::stderr())?;
+    loop {
+        print!("{esc}c", esc = 27 as char);
+        get_initial_todos().unwrap();
+        let mut args = vec![];
+        let items = vec!["add", "done", "remove"];
+        let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+            .items(&items)
+            .default(0)
+            .interact_on_opt(&Term::stderr())?;
 
-    let operation = String::from(items[selection.unwrap()]).to_owned();
-    args.push(operation.clone());
+        let operation = String::from(items[selection.unwrap()]).to_owned();
+        args.push(operation.clone());
 
-    if operation == "add" {
-        let input: String = Input::new().with_prompt(&operation).interact_text()?;
-        args.push(input.clone());
-    }
-
-    if operation == "remove" {
-        let index = get_delete_index().unwrap();
-        args.push(index);
-    }
-
-    if operation == "done" {
-        let index = get_done_index().unwrap();
-        args.push(index);
-    }
-
-    let opts = Opts { args, config: None };
-    let config: Config = opts.try_into()?;
-    let mut proj = Todoer::from_config(config.config.clone());
-
-    match config.operation {
-        Operation::Print() => {}
-        Operation::PrintAll() => {}
-        Operation::Add(v) => {
-            proj.set_value(v);
-            proj.save()?;
+        if operation == "add" {
+            let input: String = Input::new().with_prompt(&operation).interact_text()?;
+            args.push(input.clone());
         }
-        Operation::Complete(i) => {
-            proj.mark_done(i);
-            proj.save()?;
+
+        if operation == "remove" {
+            let index = get_delete_index().unwrap();
+            args.push(index);
         }
-        Operation::Remove(i) => {
-            proj.remove_value(i);
-            proj.save()?;
+
+        if operation == "done" {
+            let index = get_done_index().unwrap();
+            args.push(index);
+        }
+
+        let opts = Opts { args, config: None };
+        let config: Config = opts.try_into()?;
+        let mut proj = Todoer::from_config(config.config.clone());
+
+        match config.operation {
+            Operation::Print() => {}
+            Operation::PrintAll() => {
+                break;
+            }
+            Operation::Add(v) => {
+                proj.set_value(v);
+                proj.save()?;
+            }
+            Operation::Complete(i) => {
+                proj.mark_done(i);
+                proj.save()?;
+            }
+            Operation::Remove(i) => {
+                proj.remove_value(i);
+                proj.save()?;
+            }
         }
     }
 
