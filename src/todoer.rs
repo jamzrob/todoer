@@ -1,4 +1,5 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use chrono::{Datelike, Duration, Local};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::Lines;
@@ -16,8 +17,8 @@ pub struct Todos(pub HashMap<u32, Todo>);
 pub struct Todoer {
     pub config: PathBuf,
     pub data: Todos,
-    size: u32,
-    done_count: u32,
+    pub size: u32,
+    pub done_count: u32,
 }
 
 pub fn default_data() -> Todos {
@@ -102,6 +103,32 @@ impl TryFrom<&Todoer> for String {
     }
 }
 
+pub fn get_yesterday_config() -> Result<PathBuf> {
+    let yesterday = Local::now() - Duration::days(1);
+    let filename = format!(
+        "{}-{:02}-{:02}",
+        yesterday.year() % 100,
+        yesterday.month(),
+        yesterday.day()
+    );
+
+    if let Ok(home) = std::env::var("XDG_CONFIG_HOME") {
+        let mut home = PathBuf::from(home);
+        home.push("todo");
+        home.push(format!("{}.md", filename));
+        return Ok(home);
+    }
+
+    if let Ok(home) = std::env::var("HOME") {
+        let mut home = PathBuf::from(home);
+        home.push("todo");
+        home.push(format!("{}.md", filename));
+        return Ok(home);
+    }
+
+    Err(anyhow!("unable to find config location"))
+}
+
 impl Todoer {
     pub fn default_todoer(config: PathBuf) -> Self {
         Todoer {
@@ -140,7 +167,7 @@ impl Todoer {
         for index in 0..todos.keys().len().try_into().unwrap() {
             let todo = todos.get(&index).unwrap();
             if !todo.done {
-                res += &(index.to_string() + "). " + &todo.name + "\n");
+                res += &(String::from("- ") + &todo.name.to_string() + "\n");
             }
         }
 
@@ -148,7 +175,7 @@ impl Todoer {
         for index in 0..todos.keys().len().try_into().unwrap() {
             let todo = todos.get(&index).unwrap();
             if todo.done {
-                res += &(index.to_string() + "). " + &todo.name + "\n");
+                res += &(String::from("- ") + &todo.name.to_string() + "\n");
             }
         }
         res
@@ -208,6 +235,37 @@ impl Todoer {
             let contents = std::fs::read_to_string(&config);
             let contents = contents.unwrap_or_else(|_| String::from("{\"todos\":[]}"));
             return contents.try_into().expect("Error parsing data");
+        }
+
+        // Copies over yesterday into today if it exists
+        let yesterday_config = get_yesterday_config().unwrap();
+        if std::fs::metadata(&yesterday_config).is_ok() {
+            let contents = std::fs::read_to_string(&yesterday_config);
+            let contents = contents.unwrap_or_else(|_| String::from("{\"todos\":[]}"));
+            let yesterday_contents: Todoer = contents.try_into().expect("Error parsing data");
+            let Todos(todos) = &yesterday_contents.data;
+            let mut new_data = HashMap::new();
+            let mut new_index = 0;
+            for index in 0..todos.keys().len().try_into().unwrap() {
+                let todo = todos.get(&index).unwrap();
+                if !todo.done {
+                    let new_todo = Todo {
+                        name: todo.name.clone(),
+                        done: false,
+                    };
+                    new_data.insert(new_index, new_todo);
+                    new_index += 1;
+                }
+            }
+            let data = Todos(new_data);
+
+            let size = yesterday_contents.size - yesterday_contents.done_count;
+            return Todoer {
+                config,
+                data,
+                size,
+                done_count: 0,
+            };
         }
 
         Todoer {
