@@ -42,14 +42,14 @@ async fn remove(data: web::Data<Mutex<Todoer>>, body: String) -> impl Responder 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let config = get_config(Some(std::env::current_dir().unwrap())).unwrap();
+    let config = get_config(Some(std::env::current_dir().unwrap()), None).unwrap();
 
     let port = std::env::var("PORT")
         .unwrap_or_else(|_| "3000".to_string())
         .parse()
         .unwrap();
 
-    let data = web::Data::new(Mutex::new(Todoer::from_config(config)));
+    let data = web::Data::new(Mutex::new(Todoer::from_config(config, false)));
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())

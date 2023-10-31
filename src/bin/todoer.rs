@@ -11,7 +11,7 @@ use anyhow::Result;
 fn main() -> Result<()> {
     let config: Config = Opts::parse().try_into()?;
     println!("{:?}", config);
-    let mut proj = Todoer::from_config(config.config.clone());
+    let mut proj = Todoer::from_config(config.config.clone(), false);
 
     match config.operation {
         Operation::Print() => {
