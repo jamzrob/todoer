@@ -121,6 +121,7 @@ pub fn get_config(config: Option<PathBuf>, filename: Option<String>) -> Result<P
         let mut home = PathBuf::from(home);
         home.push("todo");
         home.push(format!("{}.md", f));
+        print!("{}", home.display());
         return Ok(home);
     }
 

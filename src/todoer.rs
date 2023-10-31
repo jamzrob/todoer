@@ -48,11 +48,14 @@ impl TryFrom<String> for Todoer {
     fn try_from(data: String) -> Result<Self, Self::Error> {
         let mut lines = data.lines();
 
-        let config = PathBuf::from(
-            lines
-                .next()
-                .expect("Expect file path to be first line of file"),
-        );
+        let first_line = lines.next();
+        let home = std::env::var("HOME").unwrap();
+        let mut config = PathBuf::from(home);
+        config.push("todo");
+        let mut file = PathBuf::from(first_line.unwrap());
+        file.set_extension("md");
+        config.push(file);
+
         let mut second_line = lines.next().unwrap().splitn(2, '/');
         let done_count = second_line
             .next()
@@ -79,7 +82,12 @@ impl TryFrom<&Todoer> for String {
     type Error = anyhow::Error;
 
     fn try_from(todoer: &Todoer) -> Result<Self, Self::Error> {
-        let filename = todoer.config.as_os_str().to_str().unwrap();
+        let filename = todoer
+            .config
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
 
         let done_count = todoer.done_count.to_string();
         let size = todoer.size.to_string();
@@ -219,18 +227,20 @@ impl Todoer {
     }
 
     pub fn save(&self) -> Result<()> {
+        print!("{}", self.config.display());
         if let Some(p) = self.config.parent() {
             if std::fs::metadata(&p).is_err() {
                 std::fs::create_dir_all(p)?;
             }
         }
+        print!("{}", self.config.display());
         let contents: String = self.try_into()?;
         std::fs::write(&self.config, contents)?;
 
         Ok(())
     }
 
-    pub fn from_config(config: PathBuf) -> Self {
+    pub fn from_config(config: PathBuf, is_past: bool) -> Self {
         if std::fs::metadata(&config).is_ok() {
             let contents = std::fs::read_to_string(&config);
             let contents = contents.unwrap_or_else(|_| String::from("{\"todos\":[]}"));
@@ -238,36 +248,37 @@ impl Todoer {
         }
 
         // Copies over yesterday into today if it exists
-        let yesterday_config = get_yesterday_config().unwrap();
-        if std::fs::metadata(&yesterday_config).is_ok() {
-            let contents = std::fs::read_to_string(&yesterday_config);
-            let contents = contents.unwrap_or_else(|_| String::from("{\"todos\":[]}"));
-            let yesterday_contents: Todoer = contents.try_into().expect("Error parsing data");
-            let Todos(todos) = &yesterday_contents.data;
-            let mut new_data = HashMap::new();
-            let mut new_index = 0;
-            for index in 0..todos.keys().len().try_into().unwrap() {
-                let todo = todos.get(&index).unwrap();
-                if !todo.done {
-                    let new_todo = Todo {
-                        name: todo.name.clone(),
-                        done: false,
-                    };
-                    new_data.insert(new_index, new_todo);
-                    new_index += 1;
+        if !is_past {
+            let yesterday_config = get_yesterday_config().unwrap();
+            if std::fs::metadata(&yesterday_config).is_ok() {
+                let contents = std::fs::read_to_string(&yesterday_config);
+                let contents = contents.unwrap_or_else(|_| String::from("{\"todos\":[]}"));
+                let yesterday_contents: Todoer = contents.try_into().expect("Error parsing data");
+                let Todos(todos) = &yesterday_contents.data;
+                let mut new_data = HashMap::new();
+                let mut new_index = 0;
+                for index in 0..todos.keys().len().try_into().unwrap() {
+                    let todo = todos.get(&index).unwrap();
+                    if !todo.done {
+                        let new_todo = Todo {
+                            name: todo.name.clone(),
+                            done: false,
+                        };
+                        new_data.insert(new_index, new_todo);
+                        new_index += 1;
+                    }
                 }
+                let data = Todos(new_data);
+
+                let size = yesterday_contents.size - yesterday_contents.done_count;
+                return Todoer {
+                    config,
+                    data,
+                    size,
+                    done_count: 0,
+                };
             }
-            let data = Todos(new_data);
-
-            let size = yesterday_contents.size - yesterday_contents.done_count;
-            return Todoer {
-                config,
-                data,
-                size,
-                done_count: 0,
-            };
         }
-
         Todoer {
             config,
             data: default_data(),

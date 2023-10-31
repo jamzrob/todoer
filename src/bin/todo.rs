@@ -17,7 +17,7 @@ pub fn get_proj() -> Result<Todoer> {
         filename: None,
     };
     let config: Config = opts.try_into()?;
-    return Ok(Todoer::from_config(config.config.clone()));
+    return Ok(Todoer::from_config(config.config.clone(), false));
 }
 
 pub fn get_initial_todos() -> Result<()> {
@@ -120,7 +120,7 @@ fn main() -> Result<()> {
             filename: None,
         };
         let config: Config = opts.try_into()?;
-        let mut proj = Todoer::from_config(config.config.clone());
+        let mut proj = Todoer::from_config(config.config.clone(), false);
 
         match config.operation {
             Operation::Print() => {}
