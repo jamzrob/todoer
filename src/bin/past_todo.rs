@@ -7,6 +7,9 @@ use rust::{
 };
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::ffi::{OsStr, OsString};
+use std::fs;
+use std::path::PathBuf;
 
 use anyhow::Result;
 
@@ -21,6 +24,31 @@ pub fn get_proj() -> Result<Todoer> {
 }
 
 pub fn get_initial_todos() -> Result<()> {
+    let proj = get_proj().unwrap();
+    let value = proj.print_values();
+    println!("{}", value);
+    Ok(())
+}
+
+// function that allows user to select a file located in ~/todo
+pub fn get_file() -> Result<()> {
+    let home = std::env::var("HOME").unwrap();
+    let mut home = PathBuf::from(home);
+    home.push("todo");
+    let paths = fs::read_dir(home)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|p| p.path().extension().unwrap() == "md")
+        .map(|e| e.path().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+        .items(&paths)
+        .default(0)
+        .interact_on_opt(&Term::stderr())?;
+    Ok(())
+}
+
+pub fn get_todos() -> Result<()> {
     let proj = get_proj().unwrap();
     let value = proj.print_values();
     println!("{}", value);
@@ -88,6 +116,8 @@ pub fn get_done_index() -> Result<String> {
 fn main() -> Result<()> {
     loop {
         print!("{esc}c", esc = 27 as char);
+        get_file();
+        return Ok(());
         get_initial_todos().unwrap();
         let mut args = vec![];
         let items = vec!["add", "done", "remove"];

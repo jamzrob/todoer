@@ -7,7 +7,8 @@ use clap::Parser;
 pub struct Opts {
     pub args: Vec<String>,
 
-    #[clap(short ='c', long = "config")]
+    #[clap(short = 'c', long = "config")]
     pub config: Option<PathBuf>,
-}
 
+    pub filename: Option<String>,
+}

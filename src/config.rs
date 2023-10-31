@@ -17,7 +17,8 @@ impl TryFrom<Opts> for Config {
 
     fn try_from(value: Opts) -> Result<Self> {
         let operation = value.args.try_into()?;
-        let config = get_config(value.config)?;
+        let filename = value.filename;
+        let config = get_config(value.config, filename)?;
 
         Ok(Config { operation, config })
     }
@@ -98,27 +99,28 @@ impl TryFrom<Vec<String>> for Operation {
     }
 }
 
-pub fn get_config(config: Option<PathBuf>) -> Result<PathBuf> {
+pub fn get_config(config: Option<PathBuf>, filename: Option<String>) -> Result<PathBuf> {
     let now = Local::now();
-    let filename = format!("{}-{:02}-{:02}", now.year() % 100, now.month(), now.day());
+    let current_date_filename = format!("{}-{:02}-{:02}", now.year() % 100, now.month(), now.day());
+    let f = filename.unwrap_or(current_date_filename);
 
     if let Some(mut c) = config {
         c.push("todo");
-        c.push(format!("{}.md", filename));
+        c.push(format!("{}.md", f));
         return Ok(c);
     }
 
     if let Ok(home) = std::env::var("XDG_CONFIG_HOME") {
         let mut home = PathBuf::from(home);
         home.push("todo");
-        home.push(format!("{}.md", filename));
+        home.push(format!("{}.md", f));
         return Ok(home);
     }
 
     if let Ok(home) = std::env::var("HOME") {
         let mut home = PathBuf::from(home);
         home.push("todo");
-        home.push(format!("{}.md", filename));
+        home.push(format!("{}.md", f));
         return Ok(home);
     }
 
@@ -141,6 +143,7 @@ mod test {
         let opts: Config = Opts {
             args: vec![],
             config: Some(PathBuf::from("")),
+            filename: None,
         }
         .try_into()?;
 
@@ -154,6 +157,7 @@ mod test {
         let opts: Config = Opts {
             args: vec![String::from("add"), String::from("foo")],
             config: None,
+            filename: None,
         }
         .try_into()?;
 
@@ -166,6 +170,7 @@ mod test {
         let opts: Config = Opts {
             args: vec![String::from("done"), String::from("1")],
             config: None,
+            filename: None,
         }
         .try_into()?;
 
@@ -178,6 +183,7 @@ mod test {
         let opts: Config = Opts {
             args: vec![String::from("remove"), String::from("1")],
             config: None,
+            filename: String::new(),
         }
         .try_into()?;
 
