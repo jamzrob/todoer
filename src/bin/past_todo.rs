@@ -34,7 +34,9 @@ pub fn get_initial_todos(file: String) -> Result<()> {
 pub fn get_file() -> Result<String> {
     let home = std::env::var("HOME").unwrap();
     let mut home = PathBuf::from(home);
+    home.push("wiki");
     home.push("todo");
+
     let paths = fs::read_dir(home)
         .unwrap()
         .filter_map(|e| e.ok())

@@ -51,6 +51,7 @@ impl TryFrom<String> for Todoer {
         let first_line = lines.next();
         let home = std::env::var("HOME").unwrap();
         let mut config = PathBuf::from(home);
+        config.push("wiki");
         config.push("todo");
         let mut file = PathBuf::from(first_line.unwrap());
         file.set_extension("md");
@@ -115,13 +116,14 @@ pub fn get_yesterday_config() -> Result<PathBuf> {
     let yesterday = Local::now() - Duration::days(1);
     let filename = format!(
         "{}-{:02}-{:02}",
-        yesterday.year() % 100,
+        yesterday.year(),
         yesterday.month(),
         yesterday.day()
     );
 
     if let Ok(home) = std::env::var("XDG_CONFIG_HOME") {
         let mut home = PathBuf::from(home);
+        home.push("wiki");
         home.push("todo");
         home.push(format!("{}.md", filename));
         return Ok(home);
@@ -129,6 +131,7 @@ pub fn get_yesterday_config() -> Result<PathBuf> {
 
     if let Ok(home) = std::env::var("HOME") {
         let mut home = PathBuf::from(home);
+        home.push("wiki");
         home.push("todo");
         home.push(format!("{}.md", filename));
         return Ok(home);

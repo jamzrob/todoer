@@ -101,10 +101,11 @@ impl TryFrom<Vec<String>> for Operation {
 
 pub fn get_config(config: Option<PathBuf>, filename: Option<String>) -> Result<PathBuf> {
     let now = Local::now();
-    let current_date_filename = format!("{}-{:02}-{:02}", now.year() % 100, now.month(), now.day());
+    let current_date_filename = format!("{}-{:02}-{:02}", now.year(), now.month(), now.day());
     let f = filename.unwrap_or(current_date_filename);
 
     if let Some(mut c) = config {
+        c.push("wiki");
         c.push("todo");
         c.push(format!("{}.md", f));
         return Ok(c);
@@ -112,6 +113,7 @@ pub fn get_config(config: Option<PathBuf>, filename: Option<String>) -> Result<P
 
     if let Ok(home) = std::env::var("XDG_CONFIG_HOME") {
         let mut home = PathBuf::from(home);
+        home.push("wiki");
         home.push("todo");
         home.push(format!("{}.md", f));
         return Ok(home);
@@ -119,6 +121,7 @@ pub fn get_config(config: Option<PathBuf>, filename: Option<String>) -> Result<P
 
     if let Ok(home) = std::env::var("HOME") {
         let mut home = PathBuf::from(home);
+        home.push("wiki");
         home.push("todo");
         home.push(format!("{}.md", f));
         print!("{}", home.display());
